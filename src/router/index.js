@@ -7,12 +7,16 @@ const routes = [
     path: '/login',
     name : 'login',
     // 路由懒加载
-    component : () => import('@/views/login')
+    component : () => import('@/views/login/')
+  },
+  {
+    path: '/search',
+    component: () => import('@/views/search/')
   },
   {
     path: '/',
     // 路由懒加载
-    component : () => import('@/views/layout'),
+    component : () => import('@/views/layout/'),
     children: [
       {
         path: '', // 默认子路由
