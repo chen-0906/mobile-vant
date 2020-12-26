@@ -37,6 +37,14 @@
            ref="article-content"
            v-html="article.content">
       </div>
+      <!-- 文章评论列表 -->
+      <comment-list
+        @reply-click="onReplyClick"
+        :source="articleId"
+        :list="commentList"
+        @update-total-count="totalCommentCount=$event"
+      />
+      <!-- /文章评论列表 -->
     </div>
     <!-- 底部区域 -->
     <div class="article-bottom">
@@ -45,10 +53,12 @@
         type="default"
         round
         size="small"
+        @click="isPostShow = true"
       >写评论</van-button>
       <van-icon
         name="comment-o"
         color="#777"
+        :info="totalCommentCount"
       />
       <van-icon
         :color="article.is_collected ? 'orange' : '#777'"
@@ -63,7 +73,31 @@
       <van-icon name="share" color="#777777"></van-icon>
     </div>
     <!-- /底部区域 -->
+    <!--发布评论-->
+    <van-popup
+      v-model="isPostShow"
+      position="bottom"
+    >
+      <post-comment
+        :target="articleId"
+        @post-success="onPostSuccess"
+      ></post-comment>
+    </van-popup>
 
+    <!-- 评论回复 -->
+    <van-popup
+      v-model="isReplyShow"
+      position="bottom"
+    >
+      <!-- 这里使用 v-if 的目的是让组件随着弹出层的显示进行渲染和销毁，防止加载过的组件不重新渲染导致数据不会重新加载的问题 -->
+      <comment-reply
+        v-if="isReplyShow"
+        :comment="replyComment"
+        :article-id="articleId"
+        @close="isReplyShow = false"
+      />
+    </van-popup>
+    <!-- /评论回复 -->
   </div>
 </template>
 
@@ -78,6 +112,9 @@
   import { ImagePreview } from 'vant'
   import './github-markdown.css'
   import { addFollow, deleteFollow } from '@/api/user'
+  import CommentList from './components/comment-list'
+  import PostComment from './components/post-comment'
+  import CommentReply from './components/comment-reply'
   // 在组建中获取动态路由参数
   // this.$route.params
 export default {
@@ -89,12 +126,20 @@ export default {
     }
   },
   components: {
+    CommentList,
+    PostComment,
+    CommentReply
   },
   data () {
     return {
       article: {}, // 文章详情
       isFollowLoading: false, // 关注用户按钮的 loading 状态
       isCollectLoading: false, // 收藏的 loading 状态
+      isPostShow: false, // 控制回复的显示状态
+      commentList: [], // 文章评论列表
+      totalCommentCount: 0, // 评论总数据量
+      isReplyShow: false,
+      replyComment: {} // 当前回复评论对象
     }
   },
   computed: {
@@ -106,6 +151,20 @@ export default {
   watch: {
   },
   methods: {
+    onReplyClick(comment) {
+      this.isReplyShow = true
+      this.replyComment = comment
+    },
+    onPostSuccess(comment) {
+      // 把发布成功的评论数据对象放到评论列表顶部
+      this.commentList.unshift(comment)
+
+      // 更新评论的总数量
+      this.totalCommentCount++
+
+      // 关闭发布评论弹出层
+      this.isPostShow = false
+    },
     async onLike(){
       this.$toast.loading({
         message: '操作中...',
