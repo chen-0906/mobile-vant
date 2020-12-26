@@ -112,10 +112,16 @@ export default {
       });
       try {
         const {data} = await login(this.user)
+
+        //清楚layout 缓存
+        this.$store.commit('removeCachePage', 'LayoutIndex')
+
         Toast.success('登陆成功')
         // 将后端返回的用户登录状态 放到Vuex容器中
         this.$store.commit('setUser', data.data)
         this.$router.push(this.$route.query.redirect || '/')
+
+
       } catch (err) {
         this.$toast.fail('登录失败，手机号或验证码错误')
       }
